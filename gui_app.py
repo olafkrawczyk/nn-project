@@ -91,41 +91,60 @@ class Application(Frame):
         features = list(feature_data)
         classes = class_data.unique(); classes.sort()
 
+        choices = []
+
         for f in features:
             values = self.data[f].unique()
             values.sort()
             Label(self, text = f).grid(row = row, column = 0)
-            ttk.Combobox(self, values = list(values), state = 'readonly').grid(row = row, column = 1)
+            cb = ttk.Combobox(self, values = list(values), state = 'readonly')
+            cb.grid(row = row, column = 1)
+            choices.append(cb)
             row += 1
 
-        Button(self, text = "Diagnozuj", command = self.do_diagnosis).grid(row = row, columnspan = 2); row += 1
+        #Button(self, text = "Diagnozuj", command = self.do_diagnosis).grid(row = row, columnspan = 2); row += 1
+        Button(self, text = "Diagnozuj", command = lambda: self.do_diagnosis(choices)).grid(row = row, columnspan = 2); row += 1
 
         Label(self).grid(row = row); row += 1   # empty row
 
         Label(self, text = 'Wartości wyjściowe neuronów:').grid(row = row, columnspan = 2); row += 1
-        self.neuron_output_fields = {}
+
+        self.neuron_outputs = []
+        i = 0
 
         for c in classes:
             Label(self, text = c).grid(row = row, column = 0)
-            self.neuron_output_fields[c] = Entry(self, state = 'disabled')
-            self.neuron_output_fields[c].grid(row = row, column = 1)
+            n = Label(self)
+            n.grid(row = row, column = 1)
+            self.neuron_outputs.append(n)
             row += 1 
 
         Label(self).grid(row = row); row += 1   # empty row
 
         Label(self, text = 'Diagnoza:').grid(row = row, column = 0)
-        self.diagnosis = Entry(self, state = 'disabled')              
+        self.diagnosis = Label(self)
         self.diagnosis.grid(row = row, column = 1)
 
 
-    def do_diagnosis(self):
-        # TODO
-        instance = np.array([[1,1,1,1,1,1,1,1,1]])
-        #neuron_outputs = self.model.predict(instance)[0]
+    def do_diagnosis(self, choices):
+
+        features_vector = []
+
+        for ch in choices:
+            if not ch.get():
+                return
+            else:
+                features_vector.append(ch.get())
+
+        instance = np.array([features_vector])
+
+        activations = self.model.predict(instance)[0]
         prediction = self.model.predict_classes(instance)[0]
-        self.diagnosis['state'] = 'normal'
-        self.diagnosis.insert(END, prediction)
-        self.diagnosis['state'] = 'disabled'
+
+        for i, a in enumerate(self.neuron_outputs):
+            a['text'] = round(activations[i], 2)
+
+        self.diagnosis['text'] = prediction
 
 
 
