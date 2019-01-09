@@ -24,6 +24,9 @@ from tkinter import *
 from tkinter import ttk
 
 
+CLASS_MAPPING = ['benign', 'malignant']
+
+
 class Application(Frame):
 
     def __init__(self, master):
@@ -37,15 +40,15 @@ class Application(Frame):
 
         ## Format data
         print("Formatting data...")
-        col_names = ['ct', 'ucsi', 'ucsh', 'ma', 'bc', 'secs', 'bn', 'nn', 'mi', 'cl'];
+        col_names = ['Clump Thickness', 'Uniformity of Cell Size', 'Uniformity of Cell Shape', 'Marginal Adhesion', 'Single Epitethial Cell Size', 'Bare Nuclei', 'Bland Chromatin', 'Normal Nucleoli', 'Mitoses', 'Class'];
         self.data = pd.read_csv('./datasets/bcw_clean.csv', header=None, names=col_names)
         self.data = self.data.replace('?', 0)
         self.data = self.data.apply(pd.to_numeric)
         self.data = shuffle(self.data)
         
         # Target classes should be numbered from 0 to n-1
-        self.data['cl'] = self.data['cl'].replace(2, 0)
-        self.data['cl'] = self.data['cl'].replace(4, 1)
+        self.data['Class'] = self.data['Class'].replace(2, 0)
+        self.data['Class'] = self.data['Class'].replace(4, 1)
         
         X = self.data.iloc[:, :-1].values
         y = self.data.iloc[:, -1].values
@@ -71,7 +74,7 @@ class Application(Frame):
         
         ## Output layer
         self.model.add(Dense(2))
-        self.model.add(Activation('sigmoid'))
+        self.model.add(Activation('softmax'))
         self.model.compile(optimizer = 'adam',loss = 'mean_squared_error', metrics = ['accuracy'])
         
         ## Train the model
@@ -107,13 +110,13 @@ class Application(Frame):
 
         Label(self).grid(row = row); row += 1   # empty row
 
-        Label(self, text = 'Wartości wyjściowe neuronów:').grid(row = row, columnspan = 2); row += 1
+        Label(self, text = 'Wartości wyjściowe:').grid(row = row, columnspan = 2); row += 1
 
         self.neuron_outputs = []
         i = 0
 
         for c in classes:
-            Label(self, text = c).grid(row = row, column = 0)
+            Label(self, text = CLASS_MAPPING[c]).grid(row = row, column = 0)
             n = Label(self)
             n.grid(row = row, column = 1)
             self.neuron_outputs.append(n)
@@ -144,7 +147,7 @@ class Application(Frame):
         for i, a in enumerate(self.neuron_outputs):
             a['text'] = round(activations[i], 2)
 
-        self.diagnosis['text'] = prediction
+        self.diagnosis['text'] = CLASS_MAPPING[prediction]
 
 
 
